@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+    db:
+        container_name: 'bookstoreDB'
+        image: postgres:12.4-alpine
+        volumes:
+            - './database/postgres-data:/var/lib/postgresql/data:rw'
+        ports:
+            - '5432:5432'
+        environment:
+            POSTGRES_DB: 'postgres'
+            POSTGRES_USER: 'postgres'
+            POSTGRES_PASSWORD: 'postgres'
+        restart: unless-stopped
+
+    test_db:
+        container_name: 'bookstoreDB_test'
+        image: postgres:12.4-alpine
+        volumes:
+            - './database/postgres-test-data:/var/lib/postgresql/data:rw'
+        ports:
+            - '5433:5432'
+        environment:
+            POSTGRES_DB: 'postgres'
+            POSTGRES_USER: 'postgres'
+            POSTGRES_PASSWORD: 'postgres'
+        restart: unless-stopped
+
+    mongo:
+        container_name: 'bookstoreMongo'
+        image: mongo:5.0
+        volumes:
+            - './database/mongo-data:/data/db'
+        ports:
+            - '27017:27017'
+        environment:
+            MONGO_INITDB_ROOT_USERNAME: 'mongo'
+            MONGO_INITDB_ROOT_PASSWORD: 'mongo'
+        restart: unless-stopped
