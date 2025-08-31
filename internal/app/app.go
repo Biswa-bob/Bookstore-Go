@@ -10,7 +10,7 @@ import (
 	// "github.com/Biswa-bob/bookstore/internal/api"
 	// "github.com/Biswa-bob/bookstore/internal/middleware"
 	"github.com/Biswa-bob/bookstore/internal/store"
-	// "github.com/Biswa-bob/bookstore/migrations"
+	"github.com/Biswa-bob/bookstore/migrations"
 )
 
 type Application struct {
@@ -27,11 +27,10 @@ func NewApplication() (*Application, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer pgDB.Close()
-	// err = store.MigrateFS(pgDB, migrations.FS, ".")
-	// if err != nil {
-	// 	panic(err)
-	// }
+	err = store.MigrateFS(pgDB, migrations.FS, ".")
+	if err != nil {
+		panic(err)
+	}
 
 	// MongoDB
 	mongoClient, err := store.OpenMongo()

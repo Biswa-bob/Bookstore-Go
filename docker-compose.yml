@@ -2,39 +2,62 @@ version: '3.8'
 
 services:
     db:
-        container_name: 'bookstoreDB'
+        container_name: bookstoreDB
         image: postgres:12.4-alpine
         volumes:
-            - './database/postgres-data:/var/lib/postgresql/data:rw'
+            - ./database/postgres-data:/var/lib/postgresql/data:rw
         ports:
             - '5432:5432'
         environment:
-            POSTGRES_DB: 'postgres'
-            POSTGRES_USER: 'postgres'
-            POSTGRES_PASSWORD: 'postgres'
+            POSTGRES_DB: postgres
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
         restart: unless-stopped
+        networks:
+            - pgnetwork
 
     test_db:
-        container_name: 'bookstoreDB_test'
+        container_name: bookstoreDB_test
         image: postgres:12.4-alpine
         volumes:
-            - './database/postgres-test-data:/var/lib/postgresql/data:rw'
+            - ./database/postgres-test-data:/var/lib/postgresql/data:rw
         ports:
             - '5433:5432'
         environment:
-            POSTGRES_DB: 'postgres'
-            POSTGRES_USER: 'postgres'
-            POSTGRES_PASSWORD: 'postgres'
+            POSTGRES_DB: postgres
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
         restart: unless-stopped
+        networks:
+            - pgnetwork
 
     mongo:
-        container_name: 'bookstoreMongo'
+        container_name: bookstoreMongo
         image: mongo:5.0
         volumes:
-            - './database/mongo-data:/data/db'
+            - ./database/mongo-data:/data/db
         ports:
             - '27017:27017'
         environment:
-            MONGO_INITDB_ROOT_USERNAME: 'mongo'
-            MONGO_INITDB_ROOT_PASSWORD: 'mongo'
+            MONGO_INITDB_ROOT_USERNAME: mongo
+            MONGO_INITDB_ROOT_PASSWORD: mongo
         restart: unless-stopped
+        networks:
+            - pgnetwork
+
+    pgadmin:
+        image: dpage/pgadmin4
+        container_name: pgadminbs
+        environment:
+            PGADMIN_DEFAULT_EMAIL: admin@example.com
+            PGADMIN_DEFAULT_PASSWORD: admin123
+        ports:
+            - '8888:80'
+        networks:
+            - pgnetwork
+        depends_on:
+            - db
+
+networks:
+    pgnetwork:
+        driver: bridge
