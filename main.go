@@ -21,7 +21,7 @@ func main() {
 		panic(err)
 	}
 
-	defer app.DB.Close()
+	defer app.Close()
 
 	r := routes.SetupRoutes(app)
 
