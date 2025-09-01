@@ -46,3 +46,13 @@ func (bh *BooksHandler) HandleCreateBook(w http.ResponseWriter, r *http.Request)
 
 	utils.WriteJSON(w, http.StatusCreated, utils.Envelope{"book": createdBook})
 }
+
+func (bh *BooksHandler) HandleGetBooks(w http.ResponseWriter, r *http.Request) {
+	books, err := bh.booksStore.GetBooks()
+	if err != nil {
+		bh.logger.Printf("ERROR: getBooks: %v", err)
+		utils.WriteJSON(w, http.StatusInternalServerError, utils.Envelope{"error": "internal server error"})
+		return
+	}
+	utils.WriteJSON(w, http.StatusOK, utils.Envelope{"books": books})
+}
