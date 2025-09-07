@@ -21,6 +21,7 @@ func NewMongoBookStore(client *mongo.Client) *MongoBooksStore {
 type BooksStore interface {
 	CreateBook(*models.Book) (*models.Book, error)
 	GetBooks() ([]*models.Book, error)
+	GetBookById(primitive.ObjectID) (*models.Book, error)
 }
 
 func (mc *MongoBooksStore) CreateBook(book *models.Book) (*models.Book, error) {
@@ -69,4 +70,19 @@ func (mc *MongoBooksStore) GetBooks() ([]*models.Book, error) {
 	}
 
 	return books, nil
+}
+
+func (mc *MongoBooksStore) GetBookById(objectID primitive.ObjectID) (*models.Book, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	collection := mc.client.Database("bookstore").Collection("books")
+
+	// Empty filter matches all documents
+	var book models.Book
+	err := collection.FindOne(ctx, bson.M{"_id": objectID}).Decode(&book)
+	if err != nil {
+		return nil, err
+	}
+
+	return &book, nil
 }

@@ -56,3 +56,18 @@ func (bh *BooksHandler) HandleGetBooks(w http.ResponseWriter, r *http.Request) {
 	}
 	utils.WriteJSON(w, http.StatusOK, utils.Envelope{"books": books})
 }
+
+func (bh *BooksHandler) HandleGetBookById(w http.ResponseWriter, r *http.Request) {
+	bookID, err := utils.ReadIDParam(r)
+	if err != nil {
+		bh.logger.Printf("ERROR: readIDParam: %v", err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.Envelope{"error": "invalid workout id"})
+	}
+	book, err := bh.booksStore.GetBookById(bookID)
+	if err != nil {
+		bh.logger.Printf("ERROR: getBooks: %v", err)
+		utils.WriteJSON(w, http.StatusInternalServerError, utils.Envelope{"error": "internal server error"})
+		return
+	}
+	utils.WriteJSON(w, http.StatusOK, utils.Envelope{"book": book})
+}
