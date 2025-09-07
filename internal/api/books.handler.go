@@ -71,3 +71,53 @@ func (bh *BooksHandler) HandleGetBookById(w http.ResponseWriter, r *http.Request
 	}
 	utils.WriteJSON(w, http.StatusOK, utils.Envelope{"book": book})
 }
+
+func (bh *BooksHandler) HandleUpdateBookById(w http.ResponseWriter, r *http.Request) {
+	bookID, err := utils.ReadIDParam(r)
+	if err != nil {
+		bh.logger.Printf("ERROR: readIDParam: %v", err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.Envelope{"error": "invalid workout id"})
+	}
+	var dto store.UpdateBookDTO
+	dec := json.NewDecoder(r.Body)
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&dto); err != nil {
+		bh.logger.Printf("ERROR: decode body: %v", err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.Envelope{"error": "invalid JSON body"})
+		return
+	}
+
+	// Ensure at least one field is provided
+	if dto.Title == nil && dto.Author == nil && dto.PriceCents == nil && dto.PublishedAt == nil && dto.InStock == nil {
+		utils.WriteJSON(w, http.StatusBadRequest, utils.Envelope{"error": "no fields to update"})
+		return
+	}
+
+	// (Optional) basic validation examples
+	if dto.PriceCents != nil && *dto.PriceCents < 0 {
+		utils.WriteJSON(w, http.StatusBadRequest, utils.Envelope{"error": "price must be >= 0"})
+		return
+	}
+	updated, err := bh.booksStore.UpdateBookFieldsByID(bookID, dto)
+	if err != nil {
+		bh.logger.Printf("ERROR: getBooks: %v", err)
+		utils.WriteJSON(w, http.StatusInternalServerError, utils.Envelope{"error": "internal server error"})
+		return
+	}
+	utils.WriteJSON(w, http.StatusOK, utils.Envelope{"updated": true, "book": updated})
+}
+
+func (bh *BooksHandler) HandleDeleteBookById(w http.ResponseWriter, r *http.Request) {
+	bookID, err := utils.ReadIDParam(r)
+	if err != nil {
+		bh.logger.Printf("ERROR: readIDParam: %v", err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.Envelope{"error": "invalid workout id"})
+	}
+	err = bh.booksStore.DeleteBookById(bookID)
+	if err != nil {
+		bh.logger.Printf("ERROR: getBooks: %v", err)
+		utils.WriteJSON(w, http.StatusInternalServerError, utils.Envelope{"error": "internal server error"})
+		return
+	}
+	utils.WriteJSON(w, http.StatusOK, utils.Envelope{"deleted": true, "book_id": bookID})
+}

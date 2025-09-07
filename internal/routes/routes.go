@@ -21,6 +21,8 @@ func SetupRoutes(app *app.Application) *chi.Mux {
 	r.Post("/books", app.BookHandler.HandleCreateBook)
 	r.Get("/books", app.BookHandler.HandleGetBooks)
 	r.Get("/books/{id}", app.BookHandler.HandleGetBookById)
+	r.Patch("/books/{id}", app.BookHandler.HandleUpdateBookById)
+	r.Delete("/books/{id}", app.BookHandler.HandleDeleteBookById)
 	// r.Post("/users", app.UserHandler.HandleRegisterUser)
 	// r.Post("/tokens/authentication", app.TokenHandler.HandleCreateToken)
 	return r
