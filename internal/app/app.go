@@ -11,19 +11,19 @@ import (
 	"github.com/Biswa-bob/bookstore/internal/api"
 	"go.mongodb.org/mongo-driver/mongo"
 
-	// "github.com/Biswa-bob/bookstore/internal/middleware"
+	"github.com/Biswa-bob/bookstore/internal/middleware"
 	"github.com/Biswa-bob/bookstore/internal/store"
 	"github.com/Biswa-bob/bookstore/migrations"
 )
 
 type Application struct {
-	Logger      *log.Logger
-	BookHandler *api.BooksHandler
-	// UserHandler  *api.UserHandler
-	// TokenHandler *api.TokenHandler
-	// Middleware   middleware.UserMiddleware
-	DB     *sql.DB
-	CLIENT *mongo.Client
+	Logger       *log.Logger
+	BookHandler  *api.BooksHandler
+	UserHandler  *api.UserHandler
+	TokenHandler *api.TokenHandler
+	Middleware   middleware.UserMiddleware
+	DB           *sql.DB
+	CLIENT       *mongo.Client
 }
 
 func NewApplication() (*Application, error) {
@@ -47,23 +47,23 @@ func NewApplication() (*Application, error) {
 
 	// our stores will go here
 	booksStore := store.NewMongoBookStore(mongoClient)
-	// userStore := store.NewPostgresUserStore(pgDB)
-	// tokenStore := store.NewPostgresTokenStore(pgDB)
+	userStore := store.NewPostgresUserStore(pgDB)
+	tokenStore := store.NewPostgresTokenStore(pgDB)
 
 	// our handlers will go here
 	bookHandler := api.NewBooksHandler(booksStore, logger)
-	// userHandler := api.NewUserHandler(userStore, logger)
-	// tokenHandler := api.NewTokenHandler(tokenStore, userStore, logger)
-	// middlewareHandler := middleware.UserMiddleware{UserStore: userStore}
+	userHandler := api.NewUserHandler(userStore, logger)
+	tokenHandler := api.NewTokenHandler(tokenStore, userStore, logger)
+	middlewareHandler := middleware.UserMiddleware{UserStore: userStore}
 
 	app := &Application{
-		Logger:      logger,
-		BookHandler: bookHandler,
-		// UserHandler:  userHandler,
-		// TokenHandler: tokenHandler,
-		// Middleware:   middlewareHandler,
-		DB:     pgDB,
-		CLIENT: mongoClient,
+		Logger:       logger,
+		BookHandler:  bookHandler,
+		UserHandler:  userHandler,
+		TokenHandler: tokenHandler,
+		Middleware:   middlewareHandler,
+		DB:           pgDB,
+		CLIENT:       mongoClient,
 	}
 
 	return app, nil
