@@ -37,9 +37,10 @@ func NewMongoBookStore(client *mongo.Client) *MongoBooksStore {
 type BooksStore interface {
 	CreateBook(*models.Book) (*models.Book, error)
 	GetBooks() ([]*models.Book, error)
-	GetBookById(primitive.ObjectID) (*models.Book, error)
+	GetBookById(id primitive.ObjectID) (*models.Book, error)
 	UpdateBookFieldsByID(id primitive.ObjectID, upd UpdateBookDTO) (*models.Book, error)
-	DeleteBookById(primitive.ObjectID) error
+	DeleteBookById(id primitive.ObjectID) error
+	GetBookOwner(id primitive.ObjectID) (string, error)
 }
 
 func (mc *MongoBooksStore) CreateBook(book *models.Book) (*models.Book, error) {
@@ -161,4 +162,19 @@ func (mc *MongoBooksStore) DeleteBookById(objectID primitive.ObjectID) error {
 	}
 
 	return nil
+}
+
+func (mc *MongoBooksStore) GetBookOwner(objectID primitive.ObjectID) (string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	collection := mc.client.Database("bookstore").Collection("books")
+
+	// Empty filter matches all documents
+	var book models.Book
+	err := collection.FindOne(ctx, bson.M{"_id": objectID}).Decode(&book)
+	if err != nil {
+		return "", err
+	}
+
+	return book.UserID, nil
 }

@@ -1,10 +1,13 @@
 package api
 
 import (
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 
+	"github.com/Biswa-bob/bookstore/internal/middleware"
 	"github.com/Biswa-bob/bookstore/internal/models"
 	"github.com/Biswa-bob/bookstore/internal/store"
 	"github.com/Biswa-bob/bookstore/internal/utils"
@@ -30,13 +33,13 @@ func (bh *BooksHandler) HandleCreateBook(w http.ResponseWriter, r *http.Request)
 		utils.WriteJSON(w, http.StatusBadRequest, utils.Envelope{"error": "invalid request sent"})
 		return
 	}
-	// currentUser := middleware.GetUser(r)
-	// if currentUser == nil || currentUser == store.AnonymousUser {
-	// 	wh.logger.Printf("ERROR: decodingCreateBook: %v", err)
-	// 	utils.WriteJSON(w, http.StatusBadRequest, utils.Envelope{"error": "you must be logged in"})
-	// 	return
-	// }
-	// workout.UserID = currentUser.ID
+	currentUser := middleware.GetUser(r)
+	if currentUser == nil || currentUser == store.AnonymousUser {
+		bh.logger.Printf("ERROR: decodingCreateBook: %v", err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.Envelope{"error": "you must be logged in"})
+		return
+	}
+	book.UserID = currentUser.ID
 	createdBook, err := bh.booksStore.CreateBook(&book)
 	if err != nil {
 		bh.logger.Printf("ERROR: createBook: %v", err)
@@ -98,6 +101,31 @@ func (bh *BooksHandler) HandleUpdateBookById(w http.ResponseWriter, r *http.Requ
 		utils.WriteJSON(w, http.StatusBadRequest, utils.Envelope{"error": "price must be >= 0"})
 		return
 	}
+
+	// Check whether the book belongs to the current user
+	currentUser := middleware.GetUser(r)
+	if currentUser == nil || currentUser == store.AnonymousUser {
+		bh.logger.Printf("ERROR: decodingCreateWorkout: %v", err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.Envelope{"error": "you must be logged in to update"})
+		return
+	}
+
+	workoutOwner, err := bh.booksStore.GetBookOwner(bookID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			utils.WriteJSON(w, http.StatusNotFound, utils.Envelope{"error": "workout doesnot exits"})
+			return
+		}
+
+		utils.WriteJSON(w, http.StatusInternalServerError, utils.Envelope{"error": "internal server error"})
+		return
+	}
+
+	if workoutOwner != currentUser.ID {
+		utils.WriteJSON(w, http.StatusForbidden, utils.Envelope{"error": "you are not authorized to update the book"})
+		return
+	}
+
 	updated, err := bh.booksStore.UpdateBookFieldsByID(bookID, dto)
 	if err != nil {
 		bh.logger.Printf("ERROR: getBooks: %v", err)
@@ -113,6 +141,31 @@ func (bh *BooksHandler) HandleDeleteBookById(w http.ResponseWriter, r *http.Requ
 		bh.logger.Printf("ERROR: readIDParam: %v", err)
 		utils.WriteJSON(w, http.StatusBadRequest, utils.Envelope{"error": "invalid workout id"})
 	}
+
+	// Check whether the book belongs to the current user
+	currentUser := middleware.GetUser(r)
+	if currentUser == nil || currentUser == store.AnonymousUser {
+		bh.logger.Printf("ERROR: decodingCreateWorkout: %v", err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.Envelope{"error": "you must be logged in to update"})
+		return
+	}
+
+	workoutOwner, err := bh.booksStore.GetBookOwner(bookID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			utils.WriteJSON(w, http.StatusNotFound, utils.Envelope{"error": "workout doesnot exits"})
+			return
+		}
+
+		utils.WriteJSON(w, http.StatusInternalServerError, utils.Envelope{"error": "internal server error"})
+		return
+	}
+
+	if workoutOwner != currentUser.ID {
+		utils.WriteJSON(w, http.StatusForbidden, utils.Envelope{"error": "you are not authorized to delete the book"})
+		return
+	}
+
 	err = bh.booksStore.DeleteBookById(bookID)
 	if err != nil {
 		bh.logger.Printf("ERROR: getBooks: %v", err)

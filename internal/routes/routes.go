@@ -9,20 +9,17 @@ func SetupRoutes(app *app.Application) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Group(func(r chi.Router) {
-		// r.Use(app.Middleware.Authenticate)
+		r.Use(app.Middleware.Authenticate)
 
-		// r.Get("/workouts/{id}", app.Middleware.RequireUser(app.WorkoutHandler.HandleGetWorkoutByID))
-		// r.Post("/workouts", app.Middleware.RequireUser(app.WorkoutHandler.HandleCreateBook))
-		// r.Put("/workouts/{id}", app.Middleware.RequireUser(app.WorkoutHandler.HandleUpdateWorkoutByID))
-		// r.Delete("/workouts/{id}", app.Middleware.RequireUser(app.WorkoutHandler.HandleDeleteWorkoutByID))
+		r.Post("/books", app.BookHandler.HandleCreateBook)
+		r.Get("/books", app.BookHandler.HandleGetBooks)
+		r.Get("/books/{id}", app.BookHandler.HandleGetBookById)
+		r.Patch("/books/{id}", app.BookHandler.HandleUpdateBookById)
+		r.Delete("/books/{id}", app.BookHandler.HandleDeleteBookById)
 	})
 
 	r.Get("/health", app.HealthCheck)
-	r.Post("/books", app.BookHandler.HandleCreateBook)
-	r.Get("/books", app.BookHandler.HandleGetBooks)
-	r.Get("/books/{id}", app.BookHandler.HandleGetBookById)
-	r.Patch("/books/{id}", app.BookHandler.HandleUpdateBookById)
-	r.Delete("/books/{id}", app.BookHandler.HandleDeleteBookById)
+
 	r.Post("/users", app.UserHandler.HandleRegisterUser)
 	r.Post("/tokens/authentication", app.TokenHandler.HandleCreateToken)
 
