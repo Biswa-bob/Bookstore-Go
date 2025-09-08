@@ -1,6 +1,8 @@
 package routes
 
 import (
+	"net/http"
+
 	"github.com/Biswa-bob/bookstore/internal/app"
 	"github.com/go-chi/chi/v5"
 )
@@ -20,8 +22,10 @@ func SetupRoutes(app *app.Application) *chi.Mux {
 
 	r.Get("/health", app.HealthCheck)
 
-	r.Post("/users", app.UserHandler.HandleRegisterUser)
-	r.Post("/tokens/authentication", app.TokenHandler.HandleCreateToken)
+	r.Post("/auth/register", app.UserHandler.HandleRegisterUser)
+	r.Post("/auth/login", app.TokenHandler.HandleCreateToken)
+	r.Post("/auth/refresh", func(w http.ResponseWriter, r *http.Request) {})
+	r.Post("/auth/logout", func(w http.ResponseWriter, r *http.Request) {})
 
 	return r
 }

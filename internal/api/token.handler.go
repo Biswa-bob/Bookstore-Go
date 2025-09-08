@@ -64,12 +64,40 @@ func (h *TokenHandler) HandleCreateToken(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	token, err := h.tokenStore.CreateNewToken(user.ID, 24*time.Hour, tokens.ScopeAuth)
+	// Create legacy random token for compatibility
+	_, err = h.tokenStore.CreateNewToken(user.ID, 24*time.Hour, tokens.ScopeAuth)
 	if err != nil {
 		h.logger.Printf("ERROR: Creating Token %v", err)
 		utils.WriteJSON(w, http.StatusInternalServerError, utils.Envelope{"error": "internal server error"})
 		return
 	}
 
-	utils.WriteJSON(w, http.StatusCreated, utils.Envelope{"auth_token": token})
+	// Generate access and refresh JWTs
+	jwtPair, err := tokens.GenerateJWTPair(user.ID, 15*time.Minute, 7*24*time.Hour)
+	if err != nil {
+		h.logger.Printf("ERROR: Generating JWT pair %v", err)
+		utils.WriteJSON(w, http.StatusInternalServerError, utils.Envelope{"error": "internal server error"})
+		return
+	}
+
+	// Persist the refresh token hash for revocation/rotation
+	refreshToken := &tokens.Token{
+		Hash:   tokens.HashToken(jwtPair.RefreshToken),
+		UserID: user.ID,
+		Expiry: jwtPair.RefreshExpiry,
+		Scope:  tokens.ScopeRefresh,
+	}
+	if err := h.tokenStore.Insert(refreshToken); err != nil {
+		h.logger.Printf("ERROR: Inserting refresh token %v", err)
+		utils.WriteJSON(w, http.StatusInternalServerError, utils.Envelope{"error": "internal server error"})
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusCreated, utils.Envelope{
+		"access_token":       jwtPair.AccessToken,
+		"refresh_token":      jwtPair.RefreshToken,
+		"access_expires_at":  jwtPair.AccessExpiry,
+		"refresh_expires_at": jwtPair.RefreshExpiry,
+		"token_type":         "Bearer",
+	})
 }
