@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"regexp"
 
+	"github.com/Biswa-bob/bookstore/internal/middleware"
 	"github.com/Biswa-bob/bookstore/internal/store"
 	"github.com/Biswa-bob/bookstore/internal/utils"
 )
@@ -90,4 +91,14 @@ func (h *UserHandler) HandleRegisterUser(w http.ResponseWriter, r *http.Request)
 	}
 
 	utils.WriteJSON(w, http.StatusOK, utils.Envelope{"user": user})
+}
+
+func (h *UserHandler) HandleGetUserProfile(w http.ResponseWriter, r *http.Request) {
+	currentUser := middleware.GetUser(r)
+	if currentUser == nil || currentUser == store.AnonymousUser {
+		// h.logger.Printf("ERROR: decodingCreateWorkout: %v")
+		utils.WriteJSON(w, http.StatusBadRequest, utils.Envelope{"error": "you must be logged in to update"})
+		return
+	}
+	utils.WriteJSON(w, http.StatusOK, utils.Envelope{"user": currentUser})
 }

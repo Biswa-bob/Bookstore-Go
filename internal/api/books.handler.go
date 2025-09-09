@@ -145,7 +145,7 @@ func (bh *BooksHandler) HandleDeleteBookById(w http.ResponseWriter, r *http.Requ
 	// Check whether the book belongs to the current user
 	currentUser := middleware.GetUser(r)
 	if currentUser == nil || currentUser == store.AnonymousUser {
-		bh.logger.Printf("ERROR: decodingCreateWorkout: %v", err)
+		bh.logger.Printf("ERROR: decodingCreateBook: %v", err)
 		utils.WriteJSON(w, http.StatusBadRequest, utils.Envelope{"error": "you must be logged in to update"})
 		return
 	}

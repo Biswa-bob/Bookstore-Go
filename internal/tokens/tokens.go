@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/base32"
 	"errors"
-	"log"
 	"os"
 	"time"
 
@@ -14,7 +13,7 @@ import (
 )
 
 const (
-	ScopeAuth = "authentication"
+	ScopeAuth    = "authentication"
 	ScopeRefresh = "refresh"
 )
 
@@ -61,10 +60,10 @@ type JWTPair struct {
 // GenerateJWT creates a signed JWT with the provided subject, ttl and scope using HMAC SHA256
 func GenerateJWT(subject string, ttl time.Duration, scope string) (string, time.Time, error) {
 	err := godotenv.Load()
-    if err != nil {
-        log.Fatal("Error loading .env file")
-    }
-	
+	if err != nil {
+		// Don't fail if .env file doesn't exist, try to get from environment
+	}
+
 	secret := os.Getenv("JWT_SECRET")
 	if secret == "" {
 		return "", time.Time{}, errors.New("JWT_SECRET not set")
