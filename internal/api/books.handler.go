@@ -51,11 +51,17 @@ func (bh *BooksHandler) HandleCreateBook(w http.ResponseWriter, r *http.Request)
 }
 
 func (bh *BooksHandler) HandleGetBooks(w http.ResponseWriter, r *http.Request) {
-	books, err := bh.booksStore.GetBooks()
+	books := []*models.Book{}
+
+	fetchedBooks, err := bh.booksStore.GetBooks()
 	if err != nil {
 		bh.logger.Printf("ERROR: getBooks: %v", err)
 		utils.WriteJSON(w, http.StatusInternalServerError, utils.Envelope{"error": "internal server error"})
 		return
+	}
+
+	if fetchedBooks != nil {
+		books = fetchedBooks
 	}
 	utils.WriteJSON(w, http.StatusOK, utils.Envelope{"books": books})
 }
