@@ -51,7 +51,7 @@ func (bh *BooksHandler) HandleCreateBook(w http.ResponseWriter, r *http.Request)
 }
 
 func (bh *BooksHandler) HandleGetBooks(w http.ResponseWriter, r *http.Request) {
-	books := []*models.Book{}
+	books := []*models.BookResponse{}
 
 	fetchedBooks, err := bh.booksStore.GetBooks()
 	if err != nil {

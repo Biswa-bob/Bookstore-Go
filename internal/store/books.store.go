@@ -36,8 +36,8 @@ func NewMongoBookStore(client *mongo.Client) *MongoBooksStore {
 
 type BooksStore interface {
 	CreateBook(*models.Book) (*models.Book, error)
-	GetBooks() ([]*models.Book, error)
-	GetBookById(id primitive.ObjectID) (*models.Book, error)
+	GetBooks() ([]*models.BookResponse, error)
+	GetBookById(id primitive.ObjectID) (*models.BookResponse, error)
 	UpdateBookFieldsByID(id primitive.ObjectID, upd UpdateBookDTO) (*models.Book, error)
 	DeleteBookById(id primitive.ObjectID) error
 	GetBookOwner(id primitive.ObjectID) (string, error)
@@ -63,7 +63,7 @@ func (mc *MongoBooksStore) CreateBook(book *models.Book) (*models.Book, error) {
 	return book, nil
 }
 
-func (mc *MongoBooksStore) GetBooks() ([]*models.Book, error) {
+func (mc *MongoBooksStore) GetBooks() ([]*models.BookResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	collection := mc.client.Database("bookstore").Collection("books")
@@ -75,13 +75,14 @@ func (mc *MongoBooksStore) GetBooks() ([]*models.Book, error) {
 	}
 	defer result.Close(ctx)
 
-	var books []*models.Book
+	var books []*models.BookResponse
 	for result.Next(ctx) {
 		var book models.Book
 		if err := result.Decode(&book); err != nil {
 			return nil, err
 		}
-		books = append(books, &book)
+		response := book.ToResponse()
+		books = append(books, &response)
 	}
 
 	if err := result.Err(); err != nil {
@@ -91,7 +92,7 @@ func (mc *MongoBooksStore) GetBooks() ([]*models.Book, error) {
 	return books, nil
 }
 
-func (mc *MongoBooksStore) GetBookById(objectID primitive.ObjectID) (*models.Book, error) {
+func (mc *MongoBooksStore) GetBookById(objectID primitive.ObjectID) (*models.BookResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	collection := mc.client.Database("bookstore").Collection("books")
@@ -102,8 +103,8 @@ func (mc *MongoBooksStore) GetBookById(objectID primitive.ObjectID) (*models.Boo
 	if err != nil {
 		return nil, err
 	}
-
-	return &book, nil
+	response := book.ToResponse()
+	return &response, nil
 }
 
 func (mc *MongoBooksStore) UpdateBookFieldsByID(id primitive.ObjectID, upd UpdateBookDTO) (*models.Book, error) {
